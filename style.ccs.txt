@@ -288,3 +288,19 @@ tr:last-child td {
         padding: 16px;
     }
 }
+/* Ensure flag colors appear */
+.flag-red { color: #c92a2a !important; font-weight: bold; }
+.flag-orange { color: #e67700 !important; font-weight: bold; }
+.flag-gray { color: #495057 !important; }
+
+/* Stats boxes */
+.stat { 
+    padding: 8px 16px; 
+    border-radius: 4px; 
+    font-weight: 600; 
+    display: inline-block;
+    margin-right: 10px;
+}
+.stat.red { background: #ffe3e3; color: #c92a2a; }
+.stat.orange { background: #ffecdb; color: #e67700; }
+.stat.gray { background: #e9ecef; color: #495057; }
