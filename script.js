@@ -1,289 +1,144 @@
-// File upload handling (unchanged)
-const dropArea = document.getElementById('drop-area');
-const fileInput = document.getElementById('file-input');
-
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropArea.addEventListener(eventName, preventDefaults, false);
-});
-
-function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-}
-
-['dragenter', 'dragover'].forEach(eventName => {
-    dropArea.addEventListener(eventName, highlight, false);
-});
-
-['dragleave', 'drop'].forEach(eventName => {
-    dropArea.addEventListener(eventName, unhighlight, false);
-});
-
-function highlight() {
-    dropArea.style.borderColor = '#0d3b5e';
-    dropArea.style.backgroundColor = '#eef6ff';
-}
-
-function unhighlight() {
-    dropArea.style.borderColor = '#dee2e6';
-    dropArea.style.backgroundColor = '#f8f9fa';
-}
-
-dropArea.addEventListener('drop', handleDrop, false);
-
-function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    if (files.length) {
-        processFile(files[0]);
-    }
-}
-
-fileInput.addEventListener('change', function() {
-    if (this.files.length) {
-        processFile(this.files[0]);
-    }
-});
-
-function processFile(file) {
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-        let text = '';
-        const name = file.name.toLowerCase();
-        
-        if (name.endsWith('.pdf') || name.endsWith('.docx')) {
-            text = "[File uploaded: " + file.name + "]\n\n⚠️ Browser cannot extract text from PDF/DOCX.\n→ Please copy-paste key sections below for full analysis.";
-        } else if (name.endsWith('.txt')) {
-            text = e.target.result;
-        } else {
-            text = e.target.result;
-        }
-        
-        document.getElementById('contract-text').value = text;
-        if (name.endsWith('.pdf') || name.endsWith('.docx')) {
-            alert("✅ File uploaded. For full analysis, please paste relevant clauses in the text box.");
-        }
-    };
-    
-    if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
-        reader.readAsText(file);
-    } else {
-        reader.readAsText(new Blob(['']), 'utf-8');
-    }
-}
-
-// Enhanced checklist with capture logic
-const CHECKLIST = [
-    {
-        section: "GENERAL GRANT INFORMATION",
-        items: [
-            { 
-                q: "Donor", 
-                flag: "gray", 
-                detect: /(?:donor|funder|grantor)[:\s]+([A-Za-z\s\-\.\&]+?)(?:\n|\.|,|;|$)/i,
-                extractor: (match) => match ? match[1].trim() : null
-            },
-            { 
-                q: "Project title", 
-                flag: "gray", 
-                detect: /(?:project title|title of project|agreement title)[:\s]+"?([^\n"]+?)"?(?:\n|\.|$)/i,
-                extractor: (match) => match ? match[1].trim() : null
-            },
-            { 
-                q: "Start and end date", 
-                flag: "gray", 
-                detect: /(?:start date|commencement|effective date)[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})[\s\S]{0,50}?(?:end date|termination|completion)[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
-                extractor: (match) => match ? `${match[1]} → ${match[2]}` : null
-            },
-            { 
-                q: "Grant amount", 
-                flag: "gray", 
-                detect: /(?:grant amount|total funding|contract value)[:\s]+(\$|€|USD|EUR)?\s*([\d,]+(?:\.\d{1,2})?)/i,
-                extractor: (match) => match ? (match[1] || 'USD') + ' ' + match[2] : null
-            },
-            { 
-                q: "Project leader", 
-                flag: "gray", 
-                detect: /(?:project leader|team leader|principal investigator)[:\s]+([A-Za-z\s\.\-]+)/i,
-                extractor: (match) => match ? match[1].trim() : null
-            }
-        ]
-    },
-    {
-        section: "BASIC CONTRACTUAL INFORMATION",
-        items: [
-            { 
-                q: "Whereas includes Bioversity/CIAT legal status?", 
-                flag: "red",
-                detect: /(Bioversity International.*1991.*revised.*2015|CIAT.*1986.*Law 29 of 1988)/i,
-                extractor: (match) => match ? `"${match[1]}"` : null
-            },
-            { 
-                q: "Proposal budget annexed?", 
-                flag: "orange",
-                detect: /(P\s*[-\s]?\d{4,6})|(Budget Annex\s*[:\-]?\s*Annex\s*\w+)/i,
-                extractor: (match) => match ? match[0] : null
-            },
-            { 
-                q: "Defined payment schedule?", 
-                flag: "gray",
-                detect: /(payment schedule|disbursement schedule|tranche\s*\d+.*\d+%)/i,
-                extractor: (match) => match ? `"${match[0]}"` : null
-            },
-            { 
-                q: "Correct bank account listed?", 
-                flag: "red",
-                detect: /(IBAN[:\s]*[A-Z0-9\s]{10,}|Account No[:\s]*\d{5,})/i,
-                extractor: (match) => match ? match[0].trim() : null
-            }
-        ]
-    },
-    {
-        section: "REPORTING REQUIREMENTS",
-        items: [
-            { 
-                q: "Reporting deadline (days after period)", 
-                flag: "red",
-                detect: /report.*due.*within\s*(\d+)\s*days/i,
-                extractor: (match) => match ? match[1] + ' days' : null
-            },
-            { 
-                q: "Financial report formats specified?", 
-                flag: "orange",
-                detect: /(financial report template|format attached|see Annex \w+)/i,
-                extractor: (match) => match ? `"${match[0]}"` : null
-            }
-        ]
-    },
-    {
-        section: "FINANCIAL CONDITIONS",
-        items: [
-            { 
-                q: "Budget flexibility (%)", 
-                flag: "orange",
-                detect: /budget.*flexibility.*±\s*(\d+)%/i,
-                extractor: (match) => match ? `±${match[1]}%` : null
-            },
-            { 
-                q: "Overhead rate (%)", 
-                flag: "orange",
-                detect: /(overhead|indirect cost).*?(\d+(?:\.\d+)?)\s*%/i,
-                extractor: (match) => match ? match[2] + '%' : null
-            },
-            { 
-                q: "Tax obligation clause", 
-                flag: "red",
-                detect: /(withholding tax|VAT|tax liability).*?(applicable|exempt|payable)/i,
-                extractor: (match) => match ? `"${match[0]}"` : null
-            }
-        ]
-    },
-    {
-        section: "LEGAL CONDITIONS",
-        items: [
-            { 
-                q: "Immunity clause preserved?", 
-                flag: "red",
-                detect: /(no waiver.*privilege|immunity.*granted by.*agreement)/i,
-                extractor: (match) => match ? `"${match[0]}"` : null
-            },
-            { 
-                q: "Indemnity excludes consequential damages?", 
-                flag: "red",
-                detect: /indemnify.*?(no|not).*?(consequential|indirect).*?damage/i,
-                extractor: (match) => match ? `"${match[0]}"` : null
-            },
-            { 
-                q: "Insurance requirements", 
-                flag: "red",
-                detect: /(professional indemnity|liability insurance|coverage of \$[\d,]+)/i,
-                extractor: (match) => match ? `"${match[0]}"` : null
-            }
-        ]
-    }
-];
+// ===== Grant Master — Minimal Fix (camiloamercado/grantmaster) =====
+// Goal: Show actual findings (donor, clauses, dates) in results table
 
 function analyzeContract() {
-    const text = document.getElementById('contract-text').value.trim();
+    const text = document.getElementById('contract-text')?.value?.trim() || '';
     if (!text) {
-        alert("⚠️ Please paste agreement text or upload a file.");
+        alert("⚠️ Please paste the agreement text first.");
         return;
     }
 
-    let html = '';
+    // Simple but effective extraction rules — focused on your checklist
+    const findings = {
+        donor: /(?:donor|funder|grantor)\s*[:\-]?\s*([A-Za-z\s\&\.]+)/i,
+        title: /(?:project title|title)\s*[:\-]?\s*"([^"\n]+)"/i,
+        amount: /(?:grant amount|total value)\s*[:\-]?\s*(\$|€|USD|EUR)?\s*([\d,]+(?:\.\d{1,2})?)/i,
+        dates: /(?:start|effective).*?(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}).*?(?:end|completion).*?(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
+        bioversityClause: /(Bioversity International.*?1991.*?revised.*?2015)/is,
+        ciatClause: /(CIAT.*?1986.*?Law 29 of 1988)/is,
+        bankAccount: /(IBAN[:\s]*[A-Z0-9]{10,}|Account\s*No[:\s]*\d{5,})/i,
+        paymentSchedule: /(payment schedule|tranche\s*\d+.*?\d+%)/i,
+        reportingDeadline: /report.*?due.*?within\s*(\d+)\s*days/i,
+        overheadRate: /(overhead|indirect cost).*?(\d+(?:\.\d+)?)\s*%/i,
+        insurance: /(professional indemnity|liability insurance)/i,
+        immunity: /(no waiver.*?immunity|privileges and immunities granted)/is
+    };
+
     let red = 0, orange = 0, gray = 0;
-    let findings = [];
+    let rows = '';
 
-    CHECKLIST.forEach(group => {
-        html += `<tr class="section-header"><td colspan="3">${group.section}</td></tr>`;
-        
-        group.items.forEach(item => {
-            const match = item.detect ? text.match(item.detect) : null;
-            const extracted = item.extractor ? item.extractor(match) : (match ? 'Detected' : null);
-            
-            let flagClass = '';
-            let flagSymbol = '⚪';
-            let detail = extracted || 'Not found';
+    // Helper to add a row
+    function addRow(label, flag, detail) {
+        let flagSymbol = '⚪', flagClass = 'flag-gray';
+        if (flag === 'red') { flagSymbol = '🔴'; flagClass = 'flag-red'; red++; }
+        else if (flag === 'orange') { flagSymbol = '🟠'; flagClass = 'flag-orange'; orange++; }
+        else { gray++; }
 
-            if (match) {
-                if (item.flag === 'red') { flagClass = 'flag-red'; flagSymbol = '🔴'; red++; }
-                else if (item.flag === 'orange') { flagClass = 'flag-orange'; flagSymbol = '🟠'; orange++; }
-                else { flagClass = 'flag-gray'; flagSymbol = '⚪'; gray++; }
-            } else {
-                if (item.flag === 'red') { flagClass = 'flag-red'; flagSymbol = '🔴'; red++; findings.push(`🔴 RED: ${item.q}`); }
-                else if (item.flag === 'orange') { flagClass = 'flag-orange'; flagSymbol = '🟠'; orange++; findings.push(`🟠 ORANGE: ${item.q}`); }
-                else { flagClass = 'flag-gray'; flagSymbol = '⚪'; gray++; }
-            }
+        rows += `
+            <tr>
+                <td>${label}</td>
+                <td><span class="${flagClass}">${flagSymbol}</span></td>
+                <td>${detail}</td>
+            </tr>
+        `;
+    }
 
-            html += `
-                <tr>
-                    <td>${item.q}</td>
-                    <td><span class="${flagClass}">${flagSymbol}</span></td>
-                    <td>${detail}</td>
-                </tr>
-            `;
-        });
-    });
+    // === Extract & Display ===
+    let donor = text.match(findings.donor);
+    let title = text.match(findings.title);
+    let amount = text.match(findings.amount);
+    let dates = text.match(findings.dates);
 
-    document.getElementById('checklist-body').innerHTML = html;
+    addRow("Donor", "gray", donor ? `✅ ${donor[1].trim()}` : "❌ Not found");
+    addRow("Project Title", "gray", title ? `✅ "${title[1]}"` : "❌ Not found");
+    addRow("Grant Amount", "gray", amount ? `✅ ${(amount[1] || 'USD')} ${amount[2]}` : "❌ Not found");
+    addRow("Dates (Start → End)", "gray", dates ? `✅ ${dates[1]} → ${dates[2]}` : "❌ Not found");
+
+    // Contractual
+    let bio = text.match(findings.bioversityClause);
+    let ciat = text.match(findings.ciatClause);
+    let legalStatus = bio || ciat;
+    addRow("Bioversity/CIAT Legal Status Clause", "red", 
+        legalStatus ? `✅ Found: "${legalStatus[0].substring(0,60)}…"` : "❌ Missing — RED FLAG");
+
+    let bank = text.match(findings.bankAccount);
+    addRow("Bank Account Listed", "red", bank ? `✅ ${bank[0]}` : "❌ Missing — RED FLAG");
+
+    let payment = text.match(findings.paymentSchedule);
+    addRow("Payment Schedule", "gray", payment ? `✅ "${payment[0]}"` : "⚠️ Not specified");
+
+    // Reporting
+    let deadline = text.match(findings.reportingDeadline);
+    addRow("Reporting Deadline", "red", 
+        deadline ? `✅ ${deadline[1]} days` : "❌ Not ≥60 days — RED FLAG");
+
+    // Financial
+    let overhead = text.match(findings.overheadRate);
+    addRow("Overhead Rate", "orange", overhead ? `✅ ${overhead[2]}%` : "⚠️ Not specified");
+
+    // Legal
+    let ins = text.match(findings.insurance);
+    addRow("Insurance Requirements", "red", ins ? `✅ "${ins[0]}"` : "❌ Not found — RED FLAG");
+
+    let imm = text.match(findings.immunity);
+    addRow("Immunity Preserved", "red", imm ? `✅ "${imm[0].substring(0,50)}…"` : "❌ Waiver risk — RED FLAG");
+
+    // Update UI
+    if (document.getElementById('checklist-body')) {
+        document.getElementById('checklist-body').innerHTML = rows;
+    }
+
     document.getElementById('red-count').textContent = red;
     document.getElementById('orange-count').textContent = orange;
     document.getElementById('gray-count').textContent = gray;
 
-    // Enhanced email with extracted details
+    // Email draft
     let email = `✅ Grant Master Review — ${new Date().toLocaleDateString()}\n\n`;
     email += `Summary: 🔴 ${red} RED | 🟠 ${orange} ORANGE | ⚪ ${gray} GRAY\n\n`;
 
-    // Add key extracted values
-    const donorMatch = text.match(/(?:donor|funder)[:\s]+([A-Za-z\s\-\.\&]+)/i);
-    const titleMatch = text.match(/(?:project title)[:\s]+"?([^\n"]+)"/i);
-    const amountMatch = text.match(/(?:grant amount)[:\s]+(\$|€|USD|EUR)?\s*([\d,]+)/i);
-    
-    if (donorMatch) email += `• Donor: ${donorMatch[1].trim()}\n`;
-    if (titleMatch) email += `• Project: ${titleMatch[1].trim()}\n`;
-    if (amountMatch) email += `• Amount: ${(amountMatch[1] || 'USD')} ${amountMatch[2]}\n`;
-    
-    if (findings.length > 0) {
-        email += `\n⚠️ Action Required:\n`;
-        findings.forEach(f => email += `- ${f}\n`);
-    } else {
-        email += `\n✅ No critical flags. Proceed with clearance.\n`;
+    if (donor) email += `• Donor: ${donor[1].trim()}\n`;
+    if (title) email += `• Project: ${title[1]}\n`;
+    if (amount) email += `• Amount: ${(amount[1] || 'USD')} ${amount[2]}\n`;
+    if (dates) email += `• Period: ${dates[1]} to ${dates[2]}\n`;
+
+    if (red > 0) {
+        email += `\n🚨 RED FLAGS — Escalate to Legal + PLANS:\n`;
+        if (!legalStatus) email += `- Missing Bioversity/CIAT legal status clause\n`;
+        if (!bank) email += `- Bank account not specified\n`;
+        if (!deadline || parseInt(deadline?.[1]) < 60) email += `- Reporting deadline <60 days\n`;
+        if (!imm) email += `- Immunity clause risk\n`;
     }
 
     email += `\nPrepared by Grant Master | https://camiloamercado.github.io/grantmaster`;
     document.getElementById('email-draft').textContent = email;
-    document.getElementById('results').style.display = 'block';
+
+    // Show results
+    const results = document.getElementById('results');
+    if (results) results.style.display = 'block';
 }
 
+// Copy email
 function copyEmail() {
-    const text = document.getElementById('email-draft').textContent;
-    navigator.clipboard.writeText(text).then(() => {
+    const el = document.getElementById('email-draft');
+    if (!el) return;
+    navigator.clipboard.writeText(el.textContent).then(() => {
         const btn = document.querySelector('.btn-copy');
         const orig = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-        setTimeout(() => { btn.innerHTML = orig; }, 2000);
-    }).catch(err => {
-        alert('Copy failed. Select text manually and use Ctrl+C.');
+        setTimeout(() => btn.innerHTML = orig, 2000);
     });
 }
+
+// File upload (lightweight)
+document.getElementById('file-input')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        alert(`📎 Uploaded: ${file.name}\n\n⚠️ For PDF/DOCX: Please copy-paste key clauses below for analysis.`);
+    }
+});
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    // Optional: demo text for quick test
+    // document.getElementById('contract-text').value = `Donor: USAID\nProject Title: "Climate-Resilient Seeds for Sahel"\nGrant Amount: USD 1,250,000\nStart: 01/03/2025 → End: 28/02/2027\nWhereas: Bioversity International, legally known as..., 1991, revised 2015...\nReporting due within 30 days.\nOverhead: 15%.\nProfessional indemnity insurance required.`;
+});
