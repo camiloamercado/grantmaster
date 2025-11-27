@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGO GrantGenie | AI Assistant for Grants & Projects</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Fallback minimal styles if CSS fails to load */
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7fa; }
+        .fallback { padding: 20px; background: white; border-radius: 8px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-hand-holding-heart"></i>
+                <span>GrantGenie</span>
+            </div>
+            <nav>
+                <ul>
+                    <li class="active" data-tab="dashboard"><i class="fas fa-home"></i> Dashboard</li>
+                    <li data-tab="grant-draft"><i class="fas fa-file-alt"></i> Grant Drafting</li>
+                    <li data-tab="budget-ai"><i class="fas fa-calculator"></i> Budget Justification</li>
+                    <li data-tab="risk-ai"><i class="fas fa-exclamation-triangle"></i> Risk Analysis</li>
+                    <li data-tab="donor-match"><i class="fas fa-handshake"></i> Donor Matcher</li>
+                    <li data-tab="report-ai"><i class="fas fa-chart-line"></i> Report Generator</li>
+                    <li data-tab="sdg-ai"><i class="fas fa-globe-americas"></i> SDG Analyzer</li>
+                    <li data-tab="contract-iq"><i class="fas fa-file-contract"></i> Contract IQ</li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user">
+                    <img src="https://ui-avatars.com/api/?name=NGO+Manager&background=2563eb&color=fff" alt="User">
+                    <span>Project Manager</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active">
+                <div class="header">
+                    <h1>Welcome back, Sarah!</h1>
+                    <p>AI-powered support for your grants & projects</p>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-file-alt stat-icon"></i>
+                        <h3>12</h3>
+                        <p>Active Proposals</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-handshake stat-icon"></i>
+                        <h3>8</h3>
+                        <p>Funded Projects</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-exclamation-triangle stat-icon"></i>
+                        <h3>3</h3>
+                        <p>High-Risk Alerts</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-globe-americas stat-icon"></i>
+                        <h3>5</h3>
+                        <p>SDG Targets Covered</p>
+                    </div>
+                </div>
+                <div class="quick-actions">
+                    <h2>Quick Actions</h2>
+                    <div class="actions-grid">
+                        <button onclick="switchTab('grant-draft')"><i class="fas fa-magic"></i> Draft New Grant</button>
+                        <button onclick="switchTab('report-ai')"><i class="fas fa-file-invoice"></i> Generate Report</button>
+                        <button onclick="switchTab('risk-ai')"><i class="fas fa-shield-alt"></i> Run Risk Scan</button>
+                        <button onclick="switchTab('contract-iq')"><i class="fas fa-file-contract"></i> Analyze Contract</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Grant Drafting Tab -->
+            <section id="grant-draft" class="tab-content">
+                <div class="header">
+                    <h1>Grant Proposal Drafting Assistant</h1>
+                    <p>Generate context-aware sections for your next proposal</p>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Project Title</label>
+                        <input type="text" id="project-title" placeholder="e.g., Resilient Agriculture for Drought-Affected Communities in Niger">
+                    </div>
+                    <div class="form-group">
+                        <label>Target Country/Region</label>
+                        <input type="text" id="target-region" placeholder="e.g., Sahel Region, West Africa">
+                    </div>
+                    <div class="form-group">
+                        <label>Requested Amount (USD)</label>
+                        <input type="number" id="grant-amount" placeholder="500000">
+                    </div>
+                    <div class="form-group">
+                        <label>Donor (Optional)</label>
+                        <select id="donor-select">
+                            <option value="">Select donor...</option>
+                            <option value="USAID">USAID</option>
+                            <option value="FCDO">FCDO</option>
+                            <option value="EU">European Commission</option>
+                            <option value="UNICEF">UNICEF</option>
+                            <option value="Gates">Bill & Melinda Gates Foundation</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label>Project Summary (1-2 sentences)</label>
+                    <textarea id="project-summary" rows="3" placeholder="e.g., This 24-month initiative aims to improve food security for 15,000 smallholder farmers through climate-smart agriculture training and seed distribution..."></textarea>
+                </div>
+                <button class="btn-primary" onclick="generateGrantSection('problem-statement')">
+                    <i class="fas fa-magic"></i> Generate Problem Statement
+                </button>
+                <div class="output-section" id="grant-output">
+                    <div class="output-header">
+                        <h3>AI-Generated Problem Statement</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('grant-output')"><i class="fas fa-copy"></i> Copy</button>
+                    </div>
+                    <div class="output-content" id="grant-output-content">
+                        <p class="placeholder">Your AI-generated problem statement will appear here...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Budget Justification Tab -->
+            <section id="budget-ai" class="tab-content">
+                <div class="header">
+                    <h1>Budget Justification Generator</h1>
+                    <p>Transform line items into donor-compliant justifications</p>
+                </div>
+                <div class="form-group full-width">
+                    <label>Budget Line Item</label>
+                    <input type="text" id="budget-item" placeholder="e.g., 10 Field Officers @ $1,500/month">
+                </div>
+                <div class="form-group full-width">
+                    <label>Context / Purpose</label>
+                    <textarea id="budget-context" rows="3" placeholder="e.g., To conduct monthly monitoring visits across 5 districts, ensuring data quality and beneficiary feedback collection"></textarea>
+                </div>
+                <button class="btn-primary" onclick="generateBudgetJustification()">
+                    <i class="fas fa-calculator"></i> Generate Justification
+                </button>
+                <div class="output-section" id="budget-output">
+                    <div class="output-header">
+                        <h3>AI-Generated Justification</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('budget-output')"><i class="fas fa-copy"></i> Copy</button>
+                    </div>
+                    <div class="output-content" id="budget-output-content">
+                        <p class="placeholder">Your justification will appear here...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Risk Analysis Tab -->
+            <section id="risk-ai" class="tab-content">
+                <div class="header">
+                    <h1>Risk Assessment & Mitigation Planner</h1>
+                    <p>Identify and address project risks proactively</p>
+                </div>
+                <div class="form-group full-width">
+                    <label>Project Context / Activity</label>
+                    <textarea id="risk-context" rows="3" placeholder="e.g., Distribution of drought-resistant seeds in conflict-affected areas of Mali"></textarea>
+                </div>
+                <button class="btn-primary" onclick="generateRiskAnalysis()">
+                    <i class="fas fa-shield-alt"></i> Analyze Risks
+                </button>
+                <div class="output-section" id="risk-output">
+                    <div class="output-header">
+                        <h3>AI-Identified Risks & Mitigation</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('risk-output')"><i class="fas fa-copy"></i> Copy</button>
+                    </div>
+                    <div class="output-content" id="risk-output-content">
+                        <p class="placeholder">Risk analysis will appear here...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Donor Matcher Tab -->
+            <section id="donor-match" class="tab-content">
+                <div class="header">
+                    <h1>Donor Requirements Matcher</h1>
+                    <p>Check alignment with key donor priorities</p>
+                </div>
+                <div class="donor-grid">
+                    <div class="donor-card" onclick="analyzeDonor('USAID')">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/US-AID-Logo.svg/1200px-US-AID-Logo.svg.png" alt="USAID" onerror="this.style.display='none'">
+                        <h3>USAID</h3>
+                        <p>Resilience, Self-Reliance, Localization</p>
+                    </div>
+                    <div class="donor-card" onclick="analyzeDonor('EU')">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg" alt="EU" onerror="this.style.display='none'">
+                        <h3>European Commission</h3>
+                        <p>Green Deal, Human Rights, Gender Equality</p>
+                    </div>
+                    <div class="donor-card" onclick="analyzeDonor('Gates')">
+                        <img src="https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Bill_%26_Melinda_Gates_Foundation_logo.svg/1200px-Bill_%26_Melinda_Gates_Foundation_logo.svg.png" alt="Gates" onerror="this.style.display='none'">
+                        <h3>Gates Foundation</h3>
+                        <p>Global Health, Agricultural Development</p>
+                    </div>
+                </div>
+                <div class="output-section" id="donor-output">
+                    <div class="output-header">
+                        <h3>Donor Alignment Analysis</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('donor-output')"><i class="fas fa-copy"></i> Copy</button>
+                    </div>
+                    <div class="output-content" id="donor-output-content">
+                        <p class="placeholder">Click a donor card to analyze alignment...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Report Generator Tab -->
+            <section id="report-ai" class="tab-content">
+                <div class="header">
+                    <h1>Progress Report Generator</h1>
+                    <p>Paste field notes → polished donor report</p>
+                </div>
+                <div class="form-group full-width">
+                    <label>Raw Field Updates (Paste notes, survey results, challenges)</label>
+                    <textarea id="field-notes" rows="8" placeholder="e.g., Week 12: 85% of farmers received seeds. Training sessions held in 3 villages. Challenge: Fuel shortages delayed truck deliveries in Region X..."></textarea>
+                </div>
+                <button class="btn-primary" onclick="generateReport()">
+                    <i class="fas fa-file-invoice"></i> Generate Report Section
+                </button>
+                <div class="output-section" id="report-output">
+                    <div class="output-header">
+                        <h3>AI-Generated Report</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('report-output')"><i class="fas fa-copy"></i> Copy</button>
+                    </div>
+                    <div class="output-content" id="report-output-content">
+                        <p class="placeholder">Your report section will appear here...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SDG Analyzer Tab -->
+            <section id="sdg-ai" class="tab-content">
+                <div class="header">
+                    <h1>SDG Impact Analyzer</h1>
+                    <p>Map your activities to Sustainable Development Goals</p>
+                </div>
+                <div class="form-group full-width">
+                    <label>Project Activity Description</label>
+                    <textarea id="sdg-activity" rows="4" placeholder="e.g., Training 200 women in solar panel installation and maintenance"></textarea>
+                </div>
+                <button class="btn-primary" onclick="analyzeSDG()">
+                    <i class="fas fa-globe-americas"></i> Analyze SDG Alignment
+                </button>
+                <div class="output-section" id="sdg-output">
+                    <div class="output-header">
+                        <h3>SDG Mapping & Indicators</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('sdg-output')"><i class="fas fa-copy"></i> Copy</button>
+                    </div>
+                    <div class="output-content" id="sdg-output-content">
+                        <p class="placeholder">SDG analysis will appear here...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contract IQ Tab -->
+            <section id="contract-iq" class="tab-content">
+                <div class="header">
+                    <h1>Contract IQ: Clause Intelligence Engine</h1>
+                    <p>Upload or paste a grant agreement — AI extracts & analyzes contractual obligations</p>
+                </div>
+
+                <div class="contract-upload">
+                    <div class="upload-area" id="drop-area">
+                        <i class="fas fa-file-contract fa-3x"></i>
+                        <h3>Drag & Drop Agreement (PDF/DOCX/TXT)</h3>
+                        <p>or</p>
+                        <button class="btn-secondary" onclick="document.getElementById('file-input').click()">
+                            <i class="fas fa-upload"></i> Browse Files
+                        </button>
+                        <input type="file" id="file-input" accept=".pdf,.docx,.txt" hidden>
+                        <p class="hint">Max 10 MB • Sample agreement? <a href="#" onclick="loadSample()">Load demo</a></p>
+                    </div>
+
+                    <div class="or-divider">or</div>
+
+                    <div class="form-group full-width">
+                        <label>Paste Agreement Text (Excerpts OK)</label>
+                        <textarea id="contract-text" rows="6" placeholder="e.g., 'The Recipient shall maintain Comprehensive General Liability insurance... Reporting shall be submitted quarterly within 30 days... Any delay >15 days incurs penalty of 1% of installment...'"></textarea>
+                    </div>
+                </div>
+
+                <div class="contract-actions">
+                    <button class="btn-primary" onclick="analyzeContract()">
+                        <i class="fas fa-brain"></i> Analyze Contract
+                    </button>
+                    <button class="btn-outline" onclick="resetContractAnalysis()" style="margin-left: 12px;">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                </div>
+
+                <!-- Results Dashboard -->
+                <div id="contract-results" class="contract-results" style="display: none;">
+                    <div class="results-header">
+                        <h2>Contractual Obligations Summary</h2>
+                        <div class="summary-chips">
+                            <span class="chip"><i class="fas fa-shield-alt"></i> <span id="insurance-count">0</span> Insurances</span>
+                            <span class="chip"><i class="fas fa-gavel"></i> <span id="legal-count">0</span> Legal Norms</span>
+                            <span class="chip"><i class="fas fa-balance-scale"></i> <span id="arbitration-count">0</span> Dispute Clauses</span>
+                            <span class="chip"><i class="fas fa-exclamation-triangle"></i> <span id="penalty-count">0</span> Penalties</span>
+                        </div>
+                    </div>
+
+                    <div class="results-grid">
+                        <!-- Insurance Section -->
+                        <div class="result-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-umbrella"></i> Required Insurances</h3>
+                                <button class="btn-copy-sm" onclick="copySection('insurance-output')"><i class="fas fa-copy"></i></button>
+                            </div>
+                            <div class="card-content" id="insurance-output">
+                                <p class="placeholder">No insurance clauses detected.</p>
+                            </div>
+                        </div>
+
+                        <!-- Legal Norms -->
+                        <div class="result-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-book"></i> Legal & Regulatory Norms</h3>
+                                <button class="btn-copy-sm" onclick="copySection('legal-output')"><i class="fas fa-copy"></i></button>
+                            </div>
+                            <div class="card-content" id="legal-output">
+                                <p class="placeholder">No legal norms detected.</p>
+                            </div>
+                        </div>
+
+                        <!-- Arbitration -->
+                        <div class="result-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-balance-scale"></i> Arbitration & Dispute Resolution</h3>
+                                <button class="btn-copy-sm" onclick="copySection('arbitration-output')"><i class="fas fa-copy"></i></button>
+                            </div>
+                            <div class="card-content" id="arbitration-output">
+                                <p class="placeholder">No arbitration clauses detected.</p>
+                            </div>
+                        </div>
+
+                        <!-- Penalties -->
+                        <div class="result-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-exclamation-triangle"></i> Penalties & LD</h3>
+                                <button class="btn-copy-sm" onclick="copySection('penalty-output')"><i class="fas fa-copy"></i></button>
+                            </div>
+                            <div class="card-content" id="penalty-output">
+                                <p class="placeholder">No penalties detected.</p>
+                            </div>
+                        </div>
+
+                        <!-- Reporting & Payments -->
+                        <div class="result-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-calendar-alt"></i> Reporting & Disbursement Schedule</h3>
+                                <button class="btn-copy-sm" onclick="copySection('schedule-output')"><i class="fas fa-copy"></i></button>
+                            </div>
+                            <div class="card-content" id="schedule-output">
+                                <p class="placeholder">No schedules detected.</p>
+                            </div>
+                        </div>
+
+                        <!-- Funder Requirements -->
+                        <div class="result-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-tasks"></i> Funder-Specific Requirements</h3>
+                                <button class="btn-copy-sm" onclick="copySection('funder-output')"><i class="fas fa-copy"></i></button>
+                            </div>
+                            <div class="card-content" id="funder-output">
+                                <p class="placeholder">No funder requirements detected.</p>
+                            </div>
+                        </div>
+
+                        <!-- Liabilities -->
+                        <div class="result-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-user-shield"></i> Liabilities & Indemnities</h3>
+                                <button class="btn-copy-sm" onclick="copySection('liability-output')"><i class="fas fa-copy"></i></button>
+                            </div>
+                            <div class="card-content" id="liability-output">
+                                <p class="placeholder">No liability clauses detected.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Button -->
+                    <div class="export-section">
+                        <button class="btn-success" onclick="exportContractSummary()">
+                            <i class="fas fa-file-export"></i> Export Full Summary (DOCX)
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
